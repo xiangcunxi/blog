@@ -2,10 +2,14 @@ package main
 
 import (
 	"blog/dao"
+	"blog/middleware"
 	"blog/service"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"strings"
+	"time"
 )
 
 func main() {
@@ -17,6 +21,24 @@ func main() {
 	userDao := dao.NewUserDAO(db)
 
 	server := gin.Default()
+	server.Use(cors.New(cors.Config{
+		AllowHeaders: []string{"Content-Type", "Authorization"},
+		//不加这个前端拿不到
+		ExposeHeaders:    []string{"jwt-token"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			if strings.HasPrefix(origin, "http://localhost") {
+				return true
+			}
+			return strings.HasPrefix(origin, "http://localhost")
+		},
+		MaxAge: 12 * time.Hour,
+	}))
+
+	server.Use(middleware.NewLoginJWTMiddleware().
+		IgnorePath("/user/login").
+		IgnorePath("/user/register").Build())
+
 	u := service.NewUserHandler(userDao)
 	u.RegisterRoutes(server)
 	server.Run(":8080")

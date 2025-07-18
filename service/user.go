@@ -3,9 +3,11 @@ package service
 import (
 	"blog/dao"
 	"blog/domain"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"time"
 )
 
 type UserHandler struct {
@@ -17,9 +19,9 @@ func NewUserHandler(dao dao.UserDAO) *UserHandler {
 }
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
-	group := server.Group("/user")
-	group.POST("/signup", u.SignUp)
-	group.POST("/login", u.Login)
+	ug := server.Group("/user")
+	ug.POST("/signup", u.SignUp)
+	ug.POST("/login", u.Login)
 }
 
 func (u *UserHandler) SignUp(c *gin.Context) {
@@ -84,5 +86,20 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "密码错误"})
 		return
 	}
+
+	// 生成 JWT
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":       user.ID,
+		"username": user.Username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte("Qk1Qb2p6b3h1b1l6b2p6b3h1b1l6b2p6b3h1b1l6b2p6b3h1b1l6b2o="))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+	ctx.Header("Authorization", "Bearer "+tokenString)
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "登录成功"})
 }
