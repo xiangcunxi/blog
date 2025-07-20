@@ -49,5 +49,15 @@ func (l *LoginJWTMiddleware) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
+		//从token中提取用户信息，并存储到context中
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			if userID, exist := claims["id"]; exist {
+				ctx.Set("user_id", userID)
+			}
+			if username, exist := claims["username"]; exist {
+				ctx.Set("username", username)
+			}
+		}
 	}
 }

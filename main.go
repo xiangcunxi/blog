@@ -17,8 +17,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	dao.Run(db)
+	dao.InitDB(db)
 	userDao := dao.NewUserDAO(db)
+	postDao := dao.NewPostDAO(db)
 
 	server := gin.Default()
 	server.Use(cors.New(cors.Config{
@@ -41,5 +42,9 @@ func main() {
 
 	u := service.NewUserHandler(userDao)
 	u.RegisterRoutes(server)
+
+	p := service.NewPostHandler(postDao)
+	p.RegisterRoutes(server)
+
 	server.Run(":8080")
 }

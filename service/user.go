@@ -2,7 +2,6 @@ package service
 
 import (
 	"blog/dao"
-	"blog/domain"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -53,7 +52,7 @@ func (u *UserHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	err = u.dao.CreateUser(c, domain.User{
+	err = u.dao.CreateUser(c, dao.User{
 		Username: req.Username,
 		Password: string(hashedPassword),
 		Email:    req.Email,

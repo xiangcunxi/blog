@@ -1,7 +1,7 @@
 package domain
 
-type User struct {
-	Username string
-	Password string
-	Email    string
-}
+//type User struct {
+//	Username string
+//	Password string
+//	Email    string
+//}

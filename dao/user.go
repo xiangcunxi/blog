@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"blog/domain"
 	"context"
 	"gorm.io/gorm"
 )
@@ -13,22 +12,6 @@ type User struct {
 	Email    string `gorm:"unique;not null"`
 }
 
-type Post struct {
-	gorm.Model
-	Title   string `gorm:"not null"`
-	Content string `gorm:"not null"`
-	UserID  uint
-}
-
-type Comment struct {
-	gorm.Model
-	Content string `gorm:"not null"`
-	UserID  uint
-	User    User
-	PostID  uint
-	Post    Post
-}
-
 type GROMUserDAO struct {
 	db *gorm.DB
 }
@@ -36,7 +19,7 @@ type GROMUserDAO struct {
 type UserDAO interface {
 	FindByUsername(ctx context.Context, username string) (User, error)
 	FindByEmail(ctx context.Context, email string) (User, error)
-	CreateUser(ctx context.Context, u domain.User) error
+	CreateUser(ctx context.Context, u User) error
 }
 
 func NewUserDAO(db *gorm.DB) UserDAO {
@@ -58,11 +41,7 @@ func (dao *GROMUserDAO) FindByEmail(ctx context.Context, email string) (User, er
 	return u, err
 }
 
-func (dao *GROMUserDAO) CreateUser(ctx context.Context, u domain.User) error {
+func (dao *GROMUserDAO) CreateUser(ctx context.Context, u User) error {
 	err := dao.db.WithContext(ctx).Create(&u).Error
 	return err
-}
-
-func Run(db *gorm.DB) {
-	db.AutoMigrate(&User{}, &Post{}, &Comment{})
 }
