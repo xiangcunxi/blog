@@ -38,12 +38,12 @@ func main() {
 
 	server.Use(middleware.NewLoginJWTMiddleware().
 		IgnorePath("/user/login").
-		IgnorePath("/user/register").Build())
+		IgnorePath("/user/signup").Build())
 
 	u := service.NewUserHandler(userDao)
 	u.RegisterRoutes(server)
 
-	p := service.NewPostHandler(postDao)
+	p := service.NewPostHandler(postDao, userDao)
 	p.RegisterRoutes(server)
 
 	server.Run(":8080")

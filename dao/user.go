@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -20,6 +21,7 @@ type UserDAO interface {
 	FindByUsername(ctx context.Context, username string) (User, error)
 	FindByEmail(ctx context.Context, email string) (User, error)
 	CreateUser(ctx context.Context, u User) error
+	FindById(ctx context.Context, id int64) (User, error)
 }
 
 func NewUserDAO(db *gorm.DB) UserDAO {
@@ -44,4 +46,11 @@ func (dao *GROMUserDAO) FindByEmail(ctx context.Context, email string) (User, er
 func (dao *GROMUserDAO) CreateUser(ctx context.Context, u User) error {
 	err := dao.db.WithContext(ctx).Create(&u).Error
 	return err
+}
+
+func (dao *GROMUserDAO) FindById(ctx context.Context, id int64) (User, error) {
+	var u User
+	err := dao.db.Debug().WithContext(ctx).Where("id = ?", id).First(&u).Error
+	fmt.Println("error:", err)
+	return u, err
 }

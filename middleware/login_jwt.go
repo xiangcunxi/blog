@@ -27,7 +27,7 @@ func (l *LoginJWTMiddleware) Build() gin.HandlerFunc {
 				return
 			}
 		}
-		tokenHeader := ctx.GetHeader("jwt-token")
+		tokenHeader := ctx.GetHeader("Authorization")
 		if tokenHeader == "" {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
@@ -52,8 +52,8 @@ func (l *LoginJWTMiddleware) Build() gin.HandlerFunc {
 
 		//从token中提取用户信息，并存储到context中
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
-			if userID, exist := claims["id"]; exist {
-				ctx.Set("user_id", userID)
+			if userId, exist := claims["id"]; exist {
+				ctx.Set("user_id", userId)
 			}
 			if username, exist := claims["username"]; exist {
 				ctx.Set("username", username)

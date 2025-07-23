@@ -69,10 +69,10 @@ func (s *PostTestSuite) TestCreate() {
 				post.Ctime = 0
 				post.Utime = 0
 				assert.Equal(t, dao.Post{
-					Id:       1,
-					Title:    "test title",
-					Content:  "test content",
-					AuthorId: 0,
+					Id:      1,
+					Title:   "test title",
+					Content: "test content",
+					Author:  0,
 				}, post)
 			},
 			post: Post{
@@ -91,7 +91,7 @@ func (s *PostTestSuite) TestCreate() {
 			tc.before(t)
 			reqBody, err := json.Marshal(tc.post)
 			assert.NoError(t, err)
-			req, err := http.NewRequest(http.MethodPost, "/posts/create", bytes.NewBuffer(reqBody))
+			req, err := http.NewRequest(http.MethodPost, "/posts/edit", bytes.NewBuffer(reqBody))
 			require.NoError(t, err)
 			req.Header.Set("Content-Type", "application/json")
 
