@@ -6,6 +6,7 @@ import (
 	"blog/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -13,13 +14,16 @@ import (
 )
 
 func main() {
+	initLogger()
 	db, err := gorm.Open(mysql.Open("root:xiang123@tcp(192.168.29.128:3306)/blog?charset=utf8mb4&parseTime=True&loc=Local"))
 	if err != nil {
+		zap.L().Error("数据库连接失败", zap.Error(err))
 		panic(err)
 	}
 	dao.InitDB(db)
 	userDao := dao.NewUserDAO(db)
 	postDao := dao.NewPostDAO(db)
+	commentDao := dao.NewCommentDAO(db)
 
 	server := gin.Default()
 	server.Use(cors.New(cors.Config{
@@ -46,5 +50,16 @@ func main() {
 	p := service.NewPostHandler(postDao, userDao)
 	p.RegisterRoutes(server)
 
+	c := service.NewCommentHandler(commentDao, userDao, postDao)
+	c.RegisterRoutes(server)
+
 	server.Run(":8080")
+}
+
+func initLogger() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	zap.ReplaceGlobals(logger)
 }

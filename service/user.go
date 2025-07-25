@@ -2,8 +2,10 @@ package service
 
 import (
 	"blog/dao"
+	"blog/domain"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"time"
@@ -32,23 +34,37 @@ func (u *UserHandler) SignUp(c *gin.Context) {
 
 	var req SignUpRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusOK, domain.Result{
+			Code: 400,
+			Msg:  "参数错误",
+		})
+		zap.L().Error("用户注册绑定参数失败", zap.Error(err))
 		return
 	}
 	_, err := u.dao.FindByUsername(c, req.Username)
 	if err == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "用户已被注册"})
+		c.JSON(http.StatusOK, domain.Result{
+			Code: 400,
+			Msg:  "用户名已被注册",
+		})
 		return
 	}
 	_, err = u.dao.FindByEmail(c, req.Email)
 	if err == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "邮箱已被注册"})
+		c.JSON(http.StatusOK, domain.Result{
+			Code: 400,
+			Msg:  "邮箱已被注册",
+		})
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		c.JSON(http.StatusOK, domain.Result{
+			Code: 500,
+			Msg:  "注册失败",
+		})
+		zap.L().Error("用户注册密码加密失败", zap.Error(err))
 		return
 	}
 
@@ -58,10 +74,17 @@ func (u *UserHandler) SignUp(c *gin.Context) {
 		Email:    req.Email,
 	})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "注册失败"})
+		c.JSON(http.StatusOK, domain.Result{
+			Code: 500,
+			Msg:  "注册失败",
+		})
+		zap.L().Error("用户注册失败", zap.Error(err))
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"message": "注册成功"})
+	c.JSON(http.StatusOK, domain.Result{
+		Code: 200,
+		Msg:  "注册成功",
+	})
 }
 
 func (u *UserHandler) Login(ctx *gin.Context) {
@@ -71,18 +94,31 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	}
 
 	var req LoginRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(400, gin.H{"error": err.Error()})
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusOK, domain.Result{
+			Code: 400,
+			Msg:  "参数错误",
+		})
+		zap.L().Error("用户登录绑定参数失败", zap.Error(err))
+		return
 	}
-
 	user, err := u.dao.FindByUsername(ctx, req.Username)
 	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		ctx.JSON(http.StatusOK, domain.Result{
+			Code: 400,
+			Msg:  "用户不存在",
+		})
+		zap.L().Info("用户不存在", zap.Error(err))
 		return
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "密码错误"})
+		ctx.JSON(http.StatusOK, domain.Result{
+			Code: 400,
+			Msg:  "密码错误",
+		})
+		zap.L().Info("用户密码错误", zap.Error(err))
 		return
 	}
 
@@ -95,10 +131,17 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 
 	tokenString, err := token.SignedString([]byte("Qk1Qb2p6b3h1b1l6b2p6b3h1b1l6b2p6b3h1b1l6b2p6b3h1b1l6b2o="))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		ctx.JSON(http.StatusOK, domain.Result{
+			Code: 500,
+			Msg:  "登录失败",
+		})
+		zap.L().Error("用户登录生成token失败", zap.Error(err))
 		return
 	}
 	ctx.Header("Authorization", "Bearer "+tokenString)
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "登录成功"})
+	ctx.JSON(http.StatusOK, domain.Result{
+		Code: 200,
+		Msg:  "登录成功",
+	})
 }

@@ -8,12 +8,13 @@ import (
 )
 
 type Post struct {
-	Id      int64  `gorm:"primarykey, autoincrement"`
-	Title   string `gorm:"type=VARCHAR(1024),not null"`
-	Content string `gorm:"type=BLOB, not null"`
-	Author  int64  `gorm:"index=pid_ctime"`
-	Ctime   int64  `gorm:"index=pid_ctime"`
-	Utime   int64
+	ID       int64  `gorm:"primarykey, autoincrement"`
+	Title    string `gorm:"type=VARCHAR(1024),not null"`
+	Content  string `gorm:"type=BLOB, not null"`
+	Author   int64  `gorm:"index=pid_ctime"`
+	Ctime    int64  `gorm:"index=pid_ctime"`
+	Utime    int64
+	Comments []Comment
 }
 
 type GROMPostDAO struct {
@@ -40,13 +41,13 @@ func (dao *GROMPostDAO) Create(ctx context.Context, post Post) (int64, error) {
 	post.Ctime = now
 	post.Utime = now
 	err := dao.db.WithContext(ctx).Create(&post).Error
-	return post.Id, err
+	return post.ID, err
 }
 
 func (dao *GROMPostDAO) UpdateById(ctx context.Context, post Post) error {
 	now := time.Now().UnixMilli()
 	post.Utime = now
-	res := dao.db.WithContext(ctx).Model(&post).Where("id = ?", post.Id).
+	res := dao.db.WithContext(ctx).Model(&post).Where("id = ?", post.ID).
 		Updates(map[string]any{
 			"title":   post.Title,
 			"content": post.Content,
@@ -56,7 +57,7 @@ func (dao *GROMPostDAO) UpdateById(ctx context.Context, post Post) error {
 		return res.Error
 	}
 	if res.RowsAffected == 0 {
-		return fmt.Errorf("更新失败，可能创作者非法 id %d, author %d", post.Id, post.Author)
+		return fmt.Errorf("更新失败，可能创作者非法 id %d, author %d", post.ID, post.Author)
 	}
 	return res.Error
 }
